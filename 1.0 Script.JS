@@ -1,15 +1,13 @@
-(async function automateLinkedInLikes() {
-    let likedPosts = new Set(); // Track already liked posts
+(async function automateLinkedInLikesAndComments() {
+    let likedPosts = new Set();
     let totalLiked = 0;
-    const maxLikes = 1000000; // Large number to ensure continuous operation
+    const maxLikes = 1000000; 
     const likeButtonSelector = '.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--tertiary.ember-view.social-actions-button.react-button__trigger';
-    const reactionSelectors = {
-        'Like': '.reactions-option[aria-label="Like"]',
-        'Love': '.reactions-option[aria-label="Celebrate"]',
-        'Insightful': '.reactions-option[aria-label="Insightful"]'
-    };
+    const commentBoxSelector = '.ql-editor[contenteditable="true"]';
+    const commentPlaceholderSelector = '.comments-comment-box-comment__text-editor';
+    const postButtonSelector = '.comments-comment-box__submit-button--cr.artdeco-button.artdeco-button--1.artdeco-button--primary.ember-view';
 
-    // Create floating popup
+    // Floating popup
     const popup = document.createElement('div');
     popup.style.position = 'fixed';
     popup.style.bottom = '20px';
@@ -21,7 +19,7 @@
     popup.style.fontSize = '14px';
     popup.style.zIndex = '10000';
     popup.innerHTML = `
-        <h4>LinkedIn Auto Liker</h4>
+        <h4>LinkedIn Auto Liker & Commenter</h4>
         <p id="likeCount">Liked: 0</p>
         <p id="status">Status: Running...</p>
     `;
@@ -41,8 +39,8 @@
 
     async function clickElement(element, description, delay = 2000) {
         if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll to button
-            await waitFor(500); // Allow smooth scrolling
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            await waitFor(500);
             element.click();
             console.log(`✅ Clicked: ${description}`);
             await waitFor(delay);
@@ -52,10 +50,10 @@
     }
 
     async function reactToPost(likeButton) {
-        if (!likeButton || likedPosts.has(likeButton)) return false; // Skip if already liked
+        if (!likeButton || likedPosts.has(likeButton)) return false;
 
-        let postContainer = likeButton.closest('.feed-shared-update-v2'); // Find post container
-        if (!postContainer) return false; // Skip if post not found
+        let postContainer = likeButton.closest('.feed-shared-update-v2');
+        if (!postContainer) return false;
 
         let isAlreadyLiked = likeButton.classList.contains('react-button--active');
         if (isAlreadyLiked) {
@@ -63,20 +61,46 @@
             return false;
         }
 
-        likedPosts.add(likeButton); // Mark as processed
+        likedPosts.add(likeButton);
         await clickElement(likeButton, 'Like button', 2000);
-
-        // Randomly choose a reaction
-        let reactionType = ['Like', 'Love', 'Insightful'][Math.floor(Math.random() * 3)];
-        let reactionSelector = reactionSelectors[reactionType];
-
-        let reactionButton = document.querySelector(reactionSelector);
-        if (reactionButton) {
-            await clickElement(reactionButton, `${reactionType} reaction`, 1000);
-        }
 
         totalLiked++;
         updatePopup();
+
+        // **Step 2: Comment on the Post**
+        await waitFor(1000);
+
+        let commentPlaceholder = postContainer.querySelector(commentPlaceholderSelector);
+        if (commentPlaceholder) {
+            await clickElement(commentPlaceholder, 'Comment Placeholder', 500);
+        } else {
+            console.log("⚠️ Comment placeholder not found.");
+            return false;
+        }
+
+        let commentBox = postContainer.querySelector(commentBoxSelector);
+        if (commentBox) {
+            commentBox.click();
+            await waitFor(500);
+
+            let randomEmojis = getRandomEmojis(3);
+            commentBox.focus();
+            document.execCommand("insertText", false, randomEmojis);
+
+            let inputEvent = new Event("input", { bubbles: true });
+            commentBox.dispatchEvent(inputEvent);
+            console.log(`💬 Commented: ${randomEmojis}`);
+
+            await waitFor(500);
+
+            let postButton = postContainer.querySelector(postButtonSelector);
+            if (postButton) {
+                await clickElement(postButton, 'Post Comment Button', 2000);
+            } else {
+                console.log("⚠️ Comment button not found.");
+            }
+        }
+
         return true;
     }
 
@@ -104,7 +128,7 @@
                 continue;
             }
 
-            scrollAttempts = 0; // Reset scroll attempts if we find new posts
+            scrollAttempts = 0;
 
             for (let btn of likeButtons) {
                 await reactToPost(btn);
@@ -124,7 +148,18 @@
         }
     }
 
-    console.log("🚀 LinkedIn Auto Liker Started...");
+    console.log("🚀 LinkedIn Auto Liker & Commenter Started...");
     await scrollAndLike();
     console.log("✅ Script Running Continuously!");
 })();
+
+// **Utility function to get random emojis**
+function getRandomEmojis(count) {
+    const emojiList = ["❤️", "🔥", "👏", "😊", "💪", "🚀", "🙌", "🎉", "👍"];
+    let selectedEmojis = [];
+    for (let i = 0; i < count; i++) {
+        let randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+        selectedEmojis.push(randomEmoji);
+    }
+    return selectedEmojis.join(" ");
+}
