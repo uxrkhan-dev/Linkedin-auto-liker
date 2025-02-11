@@ -1,20 +1,19 @@
 (async function automateLinkedInLikesAndComments() {
     let likedPosts = new Set();
     let totalLiked = 0;
-    const maxLikes = 1000000; 
+    const maxLikes = 1000000;
     const likeButtonSelector = '.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--tertiary.ember-view.social-actions-button.react-button__trigger';
     const commentBoxSelector = '.ql-editor[contenteditable="true"]';
     const commentPlaceholderSelector = '.comments-comment-box-comment__text-editor';
     const postButtonSelector = '.comments-comment-box__submit-button--cr.artdeco-button.artdeco-button--1.artdeco-button--primary.ember-view';
 
-    // Floating popup
     const popup = document.createElement('div');
     popup.style.position = 'fixed';
     popup.style.bottom = '20px';
     popup.style.right = '20px';
     popup.style.padding = '10px';
-    popup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    popup.style.color = 'white';
+    popup.style.backgroundColor = 'white';  // Changed to white
+    popup.style.color = 'black';  // Changed text color to black
     popup.style.borderRadius = '5px';
     popup.style.fontSize = '14px';
     popup.style.zIndex = '10000';
@@ -101,6 +100,12 @@
             }
         }
 
+        // Add 30-second delay after every 10 likes/comments
+        if (totalLiked % 10 === 0) {
+            console.log("⏳ Waiting for 30 seconds...");
+            await waitFor(30000);
+        }
+
         return true;
     }
 
@@ -116,7 +121,7 @@
                 scrollAttempts++;
                 console.log(`🔄 No new like buttons found. Scrolling attempt: ${scrollAttempts}`);
 
-                if (scrollAttempts >= 5) {  
+                if (scrollAttempts >= 5) {
                     updateStatus("Reloading page...");
                     console.log("🔄 Reloading page due to lack of new posts...");
                     window.location.reload();
@@ -155,7 +160,7 @@
 
 // **Utility function to get random emojis**
 function getRandomEmojis(count) {
-    const emojiList = ["❤️", "🔥", "👏", "😊", "💪", "🚀", "🙌", "🎉", "👍"];
+    const emojiList = ["❤️", "🔥", "👏", "😊", "💪", "🚀", "🙌", "🎉", "👍", "💯", "🌟", "✨", "💥", "🙏", "🤩"];
     let selectedEmojis = [];
     for (let i = 0; i < count; i++) {
         let randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
