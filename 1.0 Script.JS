@@ -7,7 +7,6 @@
     const commentPlaceholderSelector = '.comments-comment-box-comment__text-editor';
     const postButtonSelector = '.comments-comment-box__submit-button--cr.artdeco-button.artdeco-button--1.artdeco-button--primary.ember-view';
 
-    // Create popup UI
     const popup = document.createElement('div');
     popup.style.position = 'fixed';
     popup.style.bottom = '20px';
@@ -38,10 +37,10 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    async function clickElement(element, description, delay = 2000) {
+    async function clickElement(element, description, delay = 3000) {
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            await waitFor(500);
+            await waitFor(1000);
             element.click();
             console.log(`✅ Clicked: ${description}`);
             await waitFor(delay);
@@ -63,17 +62,21 @@
         }
 
         likedPosts.add(likeButton);
-        await clickElement(likeButton, 'Like button', 2000);
 
+        // Like the post
+        await clickElement(likeButton, 'Like button', 4000);
         totalLiked++;
         updatePopup();
 
-        // Step 2: Comment on the Post
-        await waitFor(1000);
+        // Add human-like delay after liking
+        let randomDelay = Math.floor(Math.random() * 3000) + 2000;
+        console.log(`⏳ Waiting ${randomDelay / 1000}s before commenting...`);
+        await waitFor(randomDelay);
 
+        // Comment on the Post
         let commentPlaceholder = postContainer.querySelector(commentPlaceholderSelector);
         if (commentPlaceholder) {
-            await clickElement(commentPlaceholder, 'Comment Placeholder', 500);
+            await clickElement(commentPlaceholder, 'Comment Placeholder', 1000);
         } else {
             console.log("⚠️ Comment placeholder not found.");
             return false;
@@ -82,33 +85,35 @@
         let commentBox = postContainer.querySelector(commentBoxSelector);
         if (commentBox) {
             commentBox.click();
-            await waitFor(500);
+            await waitFor(1000);
 
             let randomEmojis = getRandomEmojis(3);
-            commentBox.focus();
-            document.execCommand("insertText", false, randomEmojis);
+            for (let char of randomEmojis) {
+                commentBox.focus();
+                document.execCommand("insertText", false, char);
+                await waitFor(Math.floor(Math.random() * 300) + 200);
+            }
 
             let inputEvent = new Event("input", { bubbles: true });
             commentBox.dispatchEvent(inputEvent);
             console.log(`💬 Commented: ${randomEmojis}`);
 
-            await waitFor(500);
+            await waitFor(2000);
 
             let postButton = postContainer.querySelector(postButtonSelector);
             if (postButton) {
-                await clickElement(postButton, 'Post Comment Button', 2000);
+                await clickElement(postButton, 'Post Comment Button', 5000);
             } else {
                 console.log("⚠️ Comment button not found.");
             }
         }
 
-        // Add 30-second delay after every 10 likes/comments
-        if (totalLiked % 10 === 0) {
-            console.log("⏳ Waiting for 30 seconds...");
-            updateStatus("Cooling down...");
-            await waitFor(30000);
-            updateStatus("Running...");
-        }
+        // Cool-down period after each interaction
+        let cooldown = Math.floor(Math.random() * 5000) + 3000;
+        console.log(`⏳ Cooling down for ${cooldown / 1000}s before next post...`);
+        updateStatus("Cooling down...");
+        await waitFor(cooldown);
+        updateStatus("Running...");
 
         return true;
     }
@@ -122,11 +127,10 @@
                 return;
             }
             await reactToPost(btn);
-            await waitFor(2000);
+            await waitFor(5000);
         }
     }
 
-    // Scroll and like continuously with MutationObserver
     async function scrollAndObserve() {
         updateStatus("Initializing observer...");
 
@@ -138,7 +142,7 @@
 
         while (true) {
             window.scrollBy(0, 1000);
-            await waitFor(3000);
+            await waitFor(5000);
             await processVisiblePosts();
         }
     }
@@ -148,7 +152,6 @@
     console.log("✅ Script Running Continuously!");
 })();
 
-// Utility function to get random emojis
 function getRandomEmojis(count) {
     const emojiList = ["❤️", "🔥", "👏", "😊", "💪", "🚀", "🙌", "🎉", "👍", "💯", "🌟", "✨", "💥", "🙏", "🤩"];
     let selectedEmojis = [];
