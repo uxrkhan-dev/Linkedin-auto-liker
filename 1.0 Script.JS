@@ -7,13 +7,15 @@
     const commentPlaceholderSelector = '.comments-comment-box-comment__text-editor';
     const postButtonSelector = '.comments-comment-box__submit-button--cr.artdeco-button.artdeco-button--1.artdeco-button--primary.ember-view';
 
+    // Create popup UI
     const popup = document.createElement('div');
     popup.style.position = 'fixed';
     popup.style.bottom = '20px';
     popup.style.right = '20px';
     popup.style.padding = '10px';
-    popup.style.backgroundColor = 'white';  // Changed to white
-    popup.style.color = 'black';  // Changed text color to black
+    popup.style.backgroundColor = 'white';
+    popup.style.color = 'black';
+    popup.style.border = '2px solid #0073b1';
     popup.style.borderRadius = '5px';
     popup.style.fontSize = '14px';
     popup.style.zIndex = '10000';
@@ -66,7 +68,7 @@
         totalLiked++;
         updatePopup();
 
-        // **Step 2: Comment on the Post**
+        // Step 2: Comment on the Post
         await waitFor(1000);
 
         let commentPlaceholder = postContainer.querySelector(commentPlaceholderSelector);
@@ -103,62 +105,50 @@
         // Add 30-second delay after every 10 likes/comments
         if (totalLiked % 10 === 0) {
             console.log("⏳ Waiting for 30 seconds...");
+            updateStatus("Cooling down...");
             await waitFor(30000);
+            updateStatus("Running...");
         }
 
         return true;
     }
 
-    async function scrollAndLike() {
-        let lastScrollHeight = 0;
-        let scrollAttempts = 0;
-
-        while (true) {
-            updateStatus("Scrolling & Looking for Likes...");
-            let likeButtons = Array.from(document.querySelectorAll(likeButtonSelector)).filter(btn => !likedPosts.has(btn));
-            
-            if (likeButtons.length === 0) {
-                scrollAttempts++;
-                console.log(`🔄 No new like buttons found. Scrolling attempt: ${scrollAttempts}`);
-
-                if (scrollAttempts >= 5) {
-                    updateStatus("Reloading page...");
-                    console.log("🔄 Reloading page due to lack of new posts...");
-                    window.location.reload();
-                    return;
-                }
-
-                window.scrollBy(0, 1000);
-                await waitFor(3000);
-                continue;
-            }
-
-            scrollAttempts = 0;
-
-            for (let btn of likeButtons) {
-                await reactToPost(btn);
-                await waitFor(2000);
-            }
-
-            window.scrollBy(0, 1000);
-            await waitFor(3000);
-
-            if (document.documentElement.scrollHeight === lastScrollHeight) {
-                console.log("📌 Reached end of feed. Reloading...");
-                updateStatus("Reloading page...");
-                window.location.reload();
+    async function processVisiblePosts() {
+        const likeButtons = Array.from(document.querySelectorAll(likeButtonSelector)).filter(btn => !likedPosts.has(btn));
+        for (const btn of likeButtons) {
+            if (totalLiked >= maxLikes) {
+                updateStatus("Max likes reached. Stopping...");
+                console.log("🚫 Max likes reached. Stopping...");
                 return;
             }
-            lastScrollHeight = document.documentElement.scrollHeight;
+            await reactToPost(btn);
+            await waitFor(2000);
+        }
+    }
+
+    // Scroll and like continuously with MutationObserver
+    async function scrollAndObserve() {
+        updateStatus("Initializing observer...");
+
+        const observer = new MutationObserver(async () => {
+            await processVisiblePosts();
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        while (true) {
+            window.scrollBy(0, 1000);
+            await waitFor(3000);
+            await processVisiblePosts();
         }
     }
 
     console.log("🚀 LinkedIn Auto Liker & Commenter Started...");
-    await scrollAndLike();
+    await scrollAndObserve();
     console.log("✅ Script Running Continuously!");
 })();
 
-// **Utility function to get random emojis**
+// Utility function to get random emojis
 function getRandomEmojis(count) {
     const emojiList = ["❤️", "🔥", "👏", "😊", "💪", "🚀", "🙌", "🎉", "👍", "💯", "🌟", "✨", "💥", "🙏", "🤩"];
     let selectedEmojis = [];
