@@ -1,101 +1,38 @@
-(async function automateBehance() {
-    let projectsAppreciated = 0;
-    let commentsPosted = 0;
-    const maxProjects = 250;
-    const projectGridSelector = '.ProjectCoverNeue-coverLink-U39';
-    const appreciatedSelector = '.Appreciate-wrapper-REw.Project-appreciateTopSidebarIcon-_E7';
-    const followButtonSelector = '.FollowButtonMinimal-button-jX1.rf-button--follow';
-    const closeButtonSelector = '.Btn-button-CqT.Btn-inverted-GDL.Btn-normal-If5.Btn-shouldBlur-ZHs.UniversalPopup-closeModule-RuD';
-    const commentInputSelector = '.TextArea-input-GZ6.ProjectCommentInput-commentTextArea-Vcg.TextArea-textarea';
-    const commentButtonSelector = '.Btn-labelWrapper-_Re';
-    const modalSelector = '.PersonalizedContentFeedModal-modal-hqT';
-    const commentContainerSelector = '.ProjectComments-projectCommentContainer-pzz';
+(async function automateLinkedInLikesAndComments() {
+    let likedPosts = new Set();
+    let totalLiked = 0;
+    const maxLikes = 1000000;
+    const likeButtonSelector = '.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--tertiary.ember-view.social-actions-button.react-button__trigger';
+    const commentBoxSelector = '.ql-editor[contenteditable="true"]';
+    const commentPlaceholderSelector = '.comments-comment-box-comment__text-editor';
+    const postButtonSelector = '.comments-comment-box__submit-button--cr.artdeco-button.artdeco-button--1.artdeco-button--primary.ember-view';
 
     const comments = [
-    "Phenomenal design 🔥",
-    "Outstanding creativity 💫",
-    "Mind-blowing visuals 💥",
-    "Superb execution 🎯",
-    "Simply stunning 😍",
-    "Amazing concept 🧩",
-    "Masterful work 🖌️",
-    "Unreal talent 🌟",
-    "Perfect blend of colors 🎨",
-    "Visual masterpiece 🖼️",
-    "Absolutely breathtaking 🌠",
-    "Such brilliant detail 🔍",
-    "Wow, so inspiring 🚀",
-    "Unique and refreshing 🍃",
-    "Impeccable craftsmanship 🛠️",
-    "Next-level creativity 🧠",
-    "Fabulous design 💖",
-    "Bold and beautiful 🔥",
-    "Innovative and fresh 💡",
-    "Super inspiring 🌟",
-    "Elegantly designed 🎨",
-    "Totally captivating 🌀",
-    "Flawless execution ✅",
-    "Vibrant and dynamic 🌈",
-    "A true work of art 🖼️",
-    "Creative brilliance 🌟",
-    "Excellent attention to detail 🔎",
-    "Top-tier design 🏆",
-    "Visually enchanting ✨",
-    "Perfection in every pixel 🖥️",
-    "Such a clever concept 💡",
-    "Amazing textures 🌊",
-    "Full of life and energy ⚡",
-    "Mesmerizing design 🌀",
-    "Refined and elegant 🎩",
-    "Spectacular visuals 🎆",
-    "Sharp and clean 🧼",
-    "Such powerful creativity 💥",
-    "Dynamic and bold 🔥",
-    "Art at its finest 🖌️",
-    "Superb aesthetic 🎨",
-    "Beautifully executed 🛠️",
-    "Mindfully crafted 🧘",
-    "Astounding work 🤩",
-    "A true inspiration 🌟",
-    "Refreshing and modern 🏙️",
-    "Unforgettable design 🧠",
-    "Seamless execution ⚡",
-    "Simply brilliant 💡",
-    "Visual perfection 👌"
+        "Great insights, thanks for sharing!", "Really valuable content, appreciate you sharing this.", "Such a thoughtful post, well done.",
+        "Love the perspective shared here.", "Insightful and well-articulated, thank you!", "Fantastic work, keep it up.",
+        "This is so well put together, thanks for sharing.", "Great read! Appreciate the effort behind this.", "Impressive work, really inspiring.",
+        "Such an interesting take, thanks for sharing!", "Valuable information, very well presented.", "Thanks for bringing this to light!", 
+        "Really enjoyed reading this, great job.", "Brilliant work, thanks for sharing.", "Love this approach, well done!",
+        "Thought-provoking content, thanks for sharing.", "Great effort, this was really helpful.", "Insightful and inspiring, keep it up!",
+        "This adds so much value, thanks for sharing.", "Really well explained, thank you.", "Such an impactful post, appreciate it.",
+        "Informative and clear, thanks for sharing!", "Appreciate the hard work behind this, well done.", "This is a great contribution, thanks!",
+        "Very well presented, appreciate it!", "Love the creativity here, great work!", "Such an important topic, thanks for sharing.",
+        "Great perspective, well written!", "This was enlightening, thank you.", "Appreciate this fresh perspective!", 
+        "Really well thought out, thanks for sharing.", "Impressive insights, keep up the good work.", "Such a relevant topic, thanks for sharing.",
+        "Fantastic breakdown, very helpful!", "Really appreciate this thoughtful post.", "Well done! Thanks for sharing.",
+        "This is so informative, appreciate it!", "Love the clarity in this, great job.", "Such a well-crafted post, thanks!",
+        "Great take on this topic, appreciate it.", "Really insightful, thanks for sharing.", "Helpful and clear, well done!",
+        "Appreciate the effort behind this, thanks!", "This was a great read, thanks for sharing!", "Such a creative approach, well done.",
+        "Very useful information, appreciate it!", "Really engaging content, thanks for sharing.", "Such a thoughtful contribution, well done!",
+        "Excellent work, thanks for sharing.", "Great insights, very much appreciated.", "Appreciate the thoughtfulness behind this post."
     ];
 
-    let clickedProjects = new Set();
+    async function waitFor(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-    const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.top = '20px';
-    popup.style.right = '20px';
-    popup.style.padding = '10px';
-    popup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    popup.style.color = 'white';
-    popup.style.borderRadius = '5px';
-    popup.style.fontSize = '14px';
-    popup.style.zIndex = '10000';
-    popup.style.display = 'block';
-    popup.innerHTML = `
-        <h4>Automation Progress:</h4>
-        <p id="appreciatedCount">Appreciated: 0</p>
-        <p id="commentCount">Comments: 0</p>
-    `;
-    document.body.appendChild(popup);
-
-    function updatePopup() {
-        document.getElementById('appreciatedCount').innerText = `Appreciated: ${projectsAppreciated}`;
-        document.getElementById('commentCount').innerText = `Comments: ${commentsPosted}`;
-    }
-
-    async function waitFor(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function clickElement(selector, description, delay = 1000) {
-        let element = document.querySelector(selector);
+    async function clickElement(element, description, delay = 3000) {
         if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            await waitFor(1000);
             element.click();
             console.log(`✅ Clicked: ${description}`);
             await waitFor(delay);
@@ -104,82 +41,62 @@
         return false;
     }
 
-    async function scrollToElement(selector) {
-        const element = document.querySelector(selector);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            await waitFor(2000);
-            console.log(`✅ Scrolled to: ${selector}`);
-        }
-    }
+    async function reactToPost(likeButton) {
+        if (!likeButton || likedPosts.has(likeButton)) return false;
 
-    async function processProjects() {
-        let projectCovers = Array.from(document.querySelectorAll(projectGridSelector))
-            .filter(project => !clickedProjects.has(project))
-            .slice(0, maxProjects);
+        let postContainer = likeButton.closest('.feed-shared-update-v2');
+        if (!postContainer) return false;
 
-        for (let project of projectCovers) {
-            clickedProjects.add(project);
-            project.click();
-            console.log("✅ Opened project cover...");
-            await waitFor(3000);
+        let isAlreadyLiked = likeButton.classList.contains('react-button--active');
+        if (isAlreadyLiked) return false;
 
-            // Appreciate project
-            let appreciateButton = document.querySelector(appreciatedSelector);
-            if (appreciateButton && !appreciateButton.classList.contains('Appreciate-wrapper-REw--active')) {
-                if (await clickElement(appreciatedSelector, 'Appreciate button', 2000)) {
-                    projectsAppreciated++;
-                    updatePopup();
-                }
-            } else {
-                console.log("✅ Already appreciated, skipping...");
-            }
+        likedPosts.add(likeButton);
+        await clickElement(likeButton, 'Like button', 4000);
+        totalLiked++;
 
-            // Scroll to comment area
-            await scrollToElement(commentContainerSelector);
+        let randomDelay = Math.floor(Math.random() * 3000) + 2000;
+        await waitFor(randomDelay);
 
-            // Post comment
-            document.querySelector(modalSelector)?.remove();
+        let commentPlaceholder = postContainer.querySelector(commentPlaceholderSelector);
+        if (commentPlaceholder) await clickElement(commentPlaceholder, 'Comment Placeholder', 1000);
+
+        let commentBox = postContainer.querySelector(commentBoxSelector);
+        if (commentBox) {
+            commentBox.click();
             await waitFor(1000);
-            let commentInput = document.querySelector(commentInputSelector);
-            if (commentInput) {
-                let randomComment = comments[Math.floor(Math.random() * comments.length)];
-                let i = 0;
-                while (i < randomComment.length) {
-                    commentInput.value += randomComment.charAt(i);
-                    commentInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    await waitFor(Math.floor(Math.random() * 200) + 100);
-                    i++;
-                }
-                await waitFor(3000);
-                let commentButton = Array.from(document.querySelectorAll(commentButtonSelector)).find(btn => btn.innerText.includes('Post a Comment'));
-                if (commentButton) {
-                    commentButton.click();
-                    await waitFor(5000);
-                    commentsPosted++;
-                    updatePopup();
-                } else {
-                    console.log("❌ Comment button not found");
-                }
-            } else {
-                console.log("❌ Comment input not found");
-            }
-
-            // Close project
-            await clickElement(closeButtonSelector, 'Close button', 3000);
-            console.log("✅ Completed project actions, moving to next...");
-
-            // Random delay to mimic human behavior
-            const randomDelay = Math.floor(Math.random() * 7000) + 3000;
-            console.log(`⏳ Waiting for ${randomDelay / 1000} seconds before the next project...`);
-            await waitFor(randomDelay);
+            let randomComment = comments[Math.floor(Math.random() * comments.length)];
+            commentBox.focus();
+            document.execCommand("insertText", false, randomComment);
+            let inputEvent = new Event("input", { bubbles: true });
+            commentBox.dispatchEvent(inputEvent);
+            let postButton = postContainer.querySelector(postButtonSelector);
+            if (postButton) await clickElement(postButton, 'Post Comment Button', 5000);
         }
-
-        console.log(`🎉 Total projects appreciated: ${projectsAppreciated}`);
-        console.log(`💬 Total comments posted: ${commentsPosted}`);
+        let cooldown = Math.floor(Math.random() * 5000) + 3000;
+        await waitFor(cooldown);
+        return true;
     }
 
-    console.log("🚀 Script started...");
-    await processProjects();
-    console.log("✅ Script completed!");
+    async function processVisiblePosts() {
+        const likeButtons = Array.from(document.querySelectorAll(likeButtonSelector)).filter(btn => !likedPosts.has(btn));
+        for (const btn of likeButtons) {
+            if (totalLiked >= maxLikes) return;
+            await reactToPost(btn);
+            await waitFor(5000);
+        }
+    }
+
+    async function scrollAndObserve() {
+        const observer = new MutationObserver(async () => { await processVisiblePosts(); });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        while (true) {
+            window.scrollBy(0, 1000);
+            await waitFor(5000);
+            await processVisiblePosts();
+        }
+    }
+
+    console.log("🚀 LinkedIn Auto Liker & Commenter Started...");
+    await scrollAndObserve();
 })();
