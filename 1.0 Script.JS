@@ -69,8 +69,14 @@
             document.execCommand("insertText", false, randomComment);
             let inputEvent = new Event("input", { bubbles: true });
             commentBox.dispatchEvent(inputEvent);
+            await waitFor(1000); // Wait for the post button to appear
             let postButton = postContainer.querySelector(postButtonSelector);
-            if (postButton) await clickElement(postButton, 'Post Comment Button', 5000);
+            if (postButton) {
+                console.log("✅ Post Comment Button found");
+                await clickElement(postButton, 'Post Comment Button', 5000);
+            } else {
+                console.log("❌ Post Comment Button not found");
+            }
         }
         let cooldown = Math.floor(Math.random() * 5000) + 3000;
         await waitFor(cooldown);
