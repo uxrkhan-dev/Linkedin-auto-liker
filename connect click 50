@@ -1,0 +1,13 @@
+(async function connectPeople() {
+    let buttons = Array.from(document.querySelectorAll('button'))
+        .filter(btn => btn.innerText.trim().toLowerCase() === 'connect');
+
+    let count = 0;
+    for (let btn of buttons) {
+        if (count >= 50) break; // Stop after 50 clicks
+        btn.click();
+        console.log(`Clicked ${count + 1} connect button(s)`);
+        count++;
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2-sec delay
+    }
+})();
