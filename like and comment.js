@@ -1,6 +1,7 @@
 (async function automateLinkedInLikesAndComments() {
     let likedPosts = new Set();
     let totalLiked = 0;
+    let totalCommented = 0;
     const maxLikes = 1000000;
     const likeButtonSelector = '.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--tertiary.ember-view.social-actions-button.react-button__trigger';
     const commentBoxSelector = '.ql-editor[contenteditable="true"]';
@@ -27,6 +28,23 @@
         "Excellent work, thanks for sharing.", "Great insights, very much appreciated.", "Appreciate the thoughtfulness behind this post."
     ];
 
+    // Create floating dashboard
+    const dashboard = document.createElement('div');
+    dashboard.style.position = 'fixed';
+    dashboard.style.top = '10px';
+    dashboard.style.right = '10px';
+    dashboard.style.padding = '10px';
+    dashboard.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    dashboard.style.color = 'white';
+    dashboard.style.zIndex = '9999';
+    dashboard.innerHTML = `<div>Likes: <span id="likesCount">0</span></div><div>Comments: <span id="commentsCount">0</span></div>`;
+    document.body.appendChild(dashboard);
+
+    function updateDashboard() {
+        document.getElementById('likesCount').textContent = totalLiked;
+        document.getElementById('commentsCount').textContent = totalCommented;
+    }
+
     async function waitFor(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
     async function clickElement(element, description, delay = 3000) {
@@ -51,10 +69,11 @@
         if (isAlreadyLiked) return false;
 
         likedPosts.add(likeButton);
-        await clickElement(likeButton, 'Like button', 4000);
+        await clickElement(likeButton, 'Like button', 1000);
         totalLiked++;
+        updateDashboard();
 
-        let randomDelay = Math.floor(Math.random() * 3000) + 2000;
+        let randomDelay = Math.floor(Math.random() * 5000) + 1000;
         await waitFor(randomDelay);
 
         let commentPlaceholder = postContainer.querySelector(commentPlaceholderSelector);
@@ -73,13 +92,15 @@
             let postButton = postContainer.querySelector(postButtonSelector);
             if (postButton) {
                 console.log("✅ Post Comment Button found");
-                await clickElement(postButton, 'Post Comment Button', 5000);
+                await clickElement(postButton, 'Post Comment Button', 1000);
+                totalCommented++;
+                updateDashboard();
             } else {
                 console.log("❌ Post Comment Button not found");
             }
         }
-        let cooldown = Math.floor(Math.random() * 5000) + 3000;
-        await waitFor(cooldown);
+
+        await waitFor(1000); // Wait a few milliseconds before scrolling down
         return true;
     }
 
