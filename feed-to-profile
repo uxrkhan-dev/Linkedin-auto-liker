@@ -1,0 +1,61 @@
+(async () => {
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  const processed = new Set();
+
+  async function likeRecentProfilePosts() {
+    await delay(4000);
+    const likeButtons = Array.from(
+      document.querySelectorAll('button[aria-label*="Like"]')
+    ).filter(btn => !btn.classList.contains('react-button--active')).slice(0, 2);
+
+    for (const btn of likeButtons) {
+      btn.scrollIntoView({ block: 'center' });
+      await delay(1000);
+      btn.click();
+      console.log('✅ Liked profile post');
+      await delay(1500);
+    }
+
+    await delay(2000);
+    window.history.back();
+  }
+
+  async function runBotCycle() {
+    const posts = document.querySelectorAll('div.feed-shared-update-v2');
+
+    for (const post of posts) {
+      const urn = post.getAttribute('data-urn');
+      if (!urn || processed.has(urn)) continue;
+      processed.add(urn);
+
+      const feedLikeBtn = post.querySelector('button[aria-label*="Like"]');
+      if (feedLikeBtn && !feedLikeBtn.classList.contains('react-button--active')) {
+        feedLikeBtn.click();
+        console.log('👍 Liked feed post');
+        await delay(2000);
+      }
+
+      const profileLink = post.querySelector("a[href*='/in/']");
+      if (profileLink) {
+        profileLink.scrollIntoView({ block: 'center' });
+        await delay(1000);
+        profileLink.click();
+        console.log('➡️ Visiting profile');
+        await likeRecentProfilePosts();
+        return; // go back and restart
+      }
+    }
+  }
+
+  async function startBot() {
+    for (let i = 0; i < 20; i++) {
+      await runBotCycle();
+      window.scrollBy(0, 800);
+      await delay(5000 + Math.random() * 2000);
+    }
+    console.log('🏁 Bot finished');
+  }
+
+  startBot();
+})();
+
